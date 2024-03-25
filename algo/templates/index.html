@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TSP Solver</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>TSP Solver</h1>
+    <input type="file" id="fileInput" accept=".xlsx, .xls"><br><br>
+    <button id="uploadBtn">Upload File</button><br><br>
+    <button id="approximationBtn">Solve with Approximation</button>
+    <button id="acoBtn">Solve with ACO</button>
+    <div id="result"></div>
+
+<script>
+    $(document).ready(function() {
+        let uploadedCities = [];
+    
+        $('#uploadBtn').click(function() {
+            var formData = new FormData();
+            formData.append('file', $('#fileInput')[0].files[0]);
+    
+            $.ajax({
+                url: '/upload/', // Assurez-vous que l'URL est correcte
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(data) {
+                    uploadedCities = data.cities;
+                    alert('File uploaded successfully');
+                },
+                error: function() {
+                    alert('File upload failed');
+                }
+            });
+        });
+    
+        $('#approximationBtn').click(function() {
+            let data = { cities: uploadedCities };
+            solveTSP('tsp-solution/', data); // Utilisez la fonction solveTSP
+        });
+        $('#acoBtn').click(function() {
+            let data = { cities: uploadedCities };
+            solveTSP('ant-system-solution/', data); // Utilisez cette ligne pour l'ACO
+        });
+    
+        function solveTSP(endpoint, cities) {
+            $.ajax({
+                url: '/' + endpoint, // Assurez-vous que l'URL est correcte
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(cities),
+                success: function(response) {
+                    let resultHtml = '';
+                    if (response.path && response.path.length) {
+                        resultHtml += '<p>Path: ' + response.path.join(', ') + '</p>';
+                    } else {
+                        resultHtml += '<p>Path information is not available.</p>';
+                    }
+                    if (response.total_distance !== undefined) {
+                        resultHtml += '<p>Total Distance: ' + response.total_distance + ' km</p>';
+                    } else {
+                        resultHtml += '<p>Total distance information is not available.</p>';
+                    }
+                    $('#result').html(resultHtml);
+                },
+                
+                error: function() {
+                    alert('Error solving TSP');
+                }
+            });
+        }
+    });
+    
+</script>
